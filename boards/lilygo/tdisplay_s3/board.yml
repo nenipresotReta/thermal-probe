@@ -1,0 +1,6 @@
+board:
+  name: tdisplay_s3
+  full_name: T-Display S3 Compatible Thermal Probe
+  vendor: lilygo
+  socs:
+    - name: esp32s3
