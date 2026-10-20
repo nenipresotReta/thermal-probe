@@ -14,3 +14,4 @@ jobs:
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
       - run: cc -Wall -Wextra -Werror -Isrc src/filter.c tests/filter_test.c -lm -o /tmp/filter-test && /tmp/filter-test
       - run: cc -Wall -Wextra -Werror -Isrc src/modbus_codec.c tests/modbus_test.c -o /tmp/modbus-test && /tmp/modbus-test
+      - run: cc -Wall -Wextra -Werror -Isrc src/http_request.c tests/http_request_test.c -o /tmp/http-request-test && /tmp/http-request-test

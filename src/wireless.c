@@ -11,6 +11,7 @@
 #include <esp_wifi.h>
 #include "wireless.h"
 #include "modbus_codec.h"
+#include "http_request.h"
 #include "wifi_credentials.h"
 K_MUTEX_DEFINE(sample_lock);
 static struct {float value[4];bool valid,ready;int64_t at;} sample;
@@ -28,17 +29,29 @@ static void event(struct net_mgmt_event_callback *cb,uint32_t ev,struct net_if *
 }
 static int receive_all(int fd,uint8_t *p,size_t n){while(n){int k=zsock_recv(fd,p,n,0);if(k<=0)return -1;p+=k;n-=k;}return 0;}
 static int send_all(int fd,const void *buf,size_t n){const char *p=buf;while(n){int k=zsock_send(fd,p,n,0);if(k<=0)return -1;p+=k;n-=k;}return 0;}
+static enum http_request_result receive_http(int fd,char *request){
+ size_t used=0;int64_t deadline=k_uptime_get()+3000;
+ for(;;){
+  int64_t remaining=deadline-k_uptime_get();if(remaining<=0)return HTTP_REQUEST_INCOMPLETE;
+  struct zsock_pollfd p={.fd=fd,.events=ZSOCK_POLLIN};
+  if(zsock_poll(&p,1,(int)remaining)<=0)return HTTP_REQUEST_INCOMPLETE;
+  int n=zsock_recv(fd,request+used,HTTP_REQUEST_LIMIT-used,0);if(n<=0)return HTTP_REQUEST_INCOMPLETE;
+  used+=n;enum http_request_result result=http_request_parse(request,used);
+  if(result!=HTTP_REQUEST_INCOMPLETE)return result;
+ }
+}
 static void client(int fd,bool http){
  struct timeval tv={.tv_sec=3};
  if(zsock_setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof tv)||zsock_setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&tv,sizeof tv)){printf("client timeout setup failed errno=%d\n",errno);return;}
- if(http){char request[512],body[512],response[800];int n=zsock_recv(fd,request,sizeof(request)-1,0);if(n<=0)return;request[n]=0;
- if(strncmp(request,"GET /api/temperature ",21)&&strncmp(request,"GET / ",6)){const char *e="HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";send_all(fd,e,strlen(e));return;}
+ if(http){char request[HTTP_REQUEST_LIMIT],body[512],response[800];enum http_request_result result=receive_http(fd,request);
+ if(result==HTTP_REQUEST_INCOMPLETE)return;
+ if(result!=HTTP_REQUEST_TEMPERATURE){const char *e=result==HTTP_REQUEST_NOT_FOUND?"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":result==HTTP_REQUEST_TOO_LARGE?"HTTP/1.1 431 Request Header Fields Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n":"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";send_all(fd,e,strlen(e));return;}
  k_mutex_lock(&sample_lock,K_FOREVER);bool v=sample.valid&&k_uptime_get()-sample.at<2000;bool r=v&&sample.ready;
  char raw[32]="null",sm[32]="null",d1[32]="null",d2[32]="null";
  if(v){snprintf(raw,sizeof raw,"%.4f",(double)sample.value[0]);snprintf(sm,sizeof sm,"%.4f",(double)sample.value[1]);}
  if(r){snprintf(d1,sizeof d1,"%.6f",(double)sample.value[2]);snprintf(d2,sizeof d2,"%.7f",(double)sample.value[3]);}
  snprintf(body,sizeof body,"{\"valid\":%s,\"derivatives_ready\":%s,\"time_s\":%.3f,\"raw_c\":%s,\"temperature_c\":%s,\"d1_c_per_s\":%s,\"d2_c_per_s2\":%s}\n",v?"true":"false",r?"true":"false",sample.at/1000.0,raw,sm,d1,d2);k_mutex_unlock(&sample_lock);
- n=snprintf(response,sizeof response,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\nContent-Length: %u\r\n\r\n%s",(unsigned)strlen(body),body);send_all(fd,response,n);return;}
+ int n=snprintf(response,sizeof response,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\nContent-Length: %u\r\n\r\n%s",(unsigned)strlen(body),body);send_all(fd,response,n);return;}
  for(;;){uint8_t q[260],reply[260];if(receive_all(fd,q,7))return;unsigned length=(q[4]<<8)|q[5];if(length<2||length>254||q[2]||q[3])return;if(receive_all(fd,q+7,length-1))return;
  uint16_t regs[8];k_mutex_lock(&sample_lock,K_FOREVER);for(int i=0;i<4;i++){uint32_t bits;memcpy(&bits,&sample.value[i],4);regs[2*i]=bits>>16;regs[2*i+1]=bits;}
  bool v=sample.valid&&k_uptime_get()-sample.at<2000;size_t n=modbus_reply(q,length+6,reply,regs,v,sample.ready);k_mutex_unlock(&sample_lock);if(!n||send_all(fd,reply,n))return;}

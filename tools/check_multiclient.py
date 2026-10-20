@@ -39,7 +39,11 @@ def http_reader():
     for i in range(12 if stress else 1):
         with socket.create_connection((host,80),2) as s:
             s.settimeout(2)
-            s.sendall(b'GET /api/temperature HTTP/1.1\r\nHost: '+host.encode()+b'\r\nConnection: close\r\n\r\n')
+            # HTTP, like Modbus, is a byte stream; no complete line is required
+            # in the first TCP packet.
+            s.sendall(b'GET /api/')
+            time.sleep(.02)
+            s.sendall(b'temperature HTTP/1.1\r\nHost: '+host.encode()+b'\r\nConnection: close\r\n\r\n')
             response=b''
             while True:
                 chunk=s.recv(4096)

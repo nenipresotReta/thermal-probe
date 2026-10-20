@@ -1,6 +1,6 @@
 # Thermal Probe
 
-Screenless ESP32-S3 + MAX31865 three-wire PT100 thermometer. Local Wi-Fi, 10 Hz acquisition, smoothed temperature and first/second derivatives. Works with [Thermal Scope](https://github.com/nenipresotReta/thermal-scope) or Artisan over Modbus TCP.
+ESP32-S3 + MAX31865 three-wire PT100 thermometer with a local display. Local Wi-Fi, 10 Hz acquisition, smoothed temperature and first/second derivatives. Works with [Thermal Scope](https://github.com/nenipresotReta/thermal-scope) or Artisan over Modbus TCP.
 
 **You MUST fill `config/device.json` before compiling or flashing.** Copy the empty template first:
 
@@ -14,7 +14,7 @@ Edit the copy locally with your **2.4 GHz WPA2** network name and password. Do n
 
 ## Hardware
 
-Tested hardware: T-Display-S3-compatible ESP32-S3 board with 16 MB flash; display removed. This is a custom board definition, not a guarantee that every T-Display variant has the same wiring. GPIO15 is driven high for this board's power enable. No display or built-in keyboard code is included.
+Tested hardware: T-Display-S3-compatible ESP32-S3 board with 16 MB flash and a 170 × 320 ST7789 display (HD19006C30 replacement). This is a custom board definition, not a guarantee that every T-Display variant has the same wiring. GPIO15 is driven high for this board's power enable. No built-in keyboard code is included.
 
 | ESP32-S3 | MAX31865 module |
 |---|---|
@@ -27,6 +27,17 @@ Tested hardware: T-Display-S3-compatible ESP32-S3 board with 16 MB flash; displa
 | — | RDY and 3V3 output left unconnected |
 
 PT100 reference resistance is **430 ohms**. For the module with F+/RTD+/RTD−/F− terminals: connect the two leads belonging to the same sensor end to F+ and RTD+; connect the single opposite lead to RTD−. Close the `2/3 Wire` bridge, leave `2 Wire` open; on the three-pad selector disconnect center from `24` and connect center to `3`. Confirm continuity with power disconnected: module layouts can differ. The probe connects to this module only, not simultaneously to an old transmitter. Firmware selects three-wire and 50 Hz rejection.
+
+### Local display
+
+The landscape display uses a GitHub Dark-inspired palette and shows temperature, D1 in °C/s, D2 in °C/s², connection address, and a local temperature curve. Sampling and the network continue independently of the screen.
+
+- Tap GPIO14 to hold/resume the local curve. Numerical readings remain live.
+- Hold GPIO14 for at least 2 s, then release to clear the local curve and its elapsed time.
+- History retains 600 points at 3 s intervals (about 30 minutes) in RAM. A reboot clears it. The default temperature range is 0–250 °C and expands for values outside that range.
+- LCD refresh is approximately 2 Hz; sensor/network sampling remains 10 Hz.
+
+The LCD uses an 8-bit 8080 bus: D0–D7 = GPIO39/40/41/42/45/46/47/48, reset = 5, CS = 6, DC = 7, WR = 8, RD = 9, backlight = 38. The driver renders four rows at a time to limit RAM use. This build disables PSRAM and has little unused static DRAM; compile and inspect the memory report when increasing buffer or thread sizes.
 
 ## Build and flash
 
@@ -52,7 +63,7 @@ sh flash.sh
 
 Use `sh build.sh -p always` for a pristine rebuild after SDK/board changes. Build output is `build/zephyr/zephyr.bin`. The board uses ESP simple boot with a complete image at offset 0; prefer the configured west flash runner. If automatic download mode fails, hold BOOT, tap RESET, release BOOT, then flash. Board button labels may differ.
 
-The source was derived from a working Zephyr 4.1-based local firmware. Host algorithm/configuration tests can run without the SDK. A clean upstream dependency installation and every hardware variant require their own verification. This source publication does not flash or change the already-running device.
+The source was derived from a working Zephyr 4.1-based local firmware. Host algorithm/configuration/protocol tests can run without the SDK. A clean upstream dependency installation and every hardware variant require their own verification. This repository contains source only.
 
 ## Data and network
 
@@ -71,7 +82,7 @@ Modbus TCP port **502**, unit **1**, functions **3/4**; zero-based registers and
 | 4 | D1 |
 | 6 | D2 |
 
-Unavailable data, readings older than 2 s or unready requested derivatives return exception 4. Up to four Modbus clients and two HTTP clients are served independently, with 3 s idle/IO timeouts. Wi-Fi power saving is disabled for responsiveness, increasing battery consumption. No heating control, cloud upload or persistent logging is implemented.
+Unavailable data, readings older than 2 s or unready requested derivatives return exception 4. Up to four Modbus clients and two HTTP clients are served independently, with 3 s idle/IO timeouts. HTTP requests may span multiple TCP packets; headers must fit within 512 bytes and arrive within 3 s. Wi-Fi power saving is disabled for responsiveness, increasing battery consumption. No heating control, cloud upload or persistent logging is implemented.
 
 ### Artisan
 
@@ -87,6 +98,8 @@ cc -Wall -Wextra -Werror -Isrc src/filter.c tests/filter_test.c -lm -o /tmp/filt
 /tmp/filter-test
 cc -Wall -Wextra -Werror -Isrc src/modbus_codec.c tests/modbus_test.c -o /tmp/modbus-test
 /tmp/modbus-test
+cc -Wall -Wextra -Werror -Isrc src/http_request.c tests/http_request_test.c -o /tmp/http-request-test
+/tmp/http-request-test
 python3 tools/check_release.py
 # Optional hardware checks (explicit target required):
 python3 tools/check_wireless.py DEVICE_IP

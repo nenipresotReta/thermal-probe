@@ -6,6 +6,7 @@
 #include <string.h>
 #include "wireless.h"
 #include "filter.h"
+#include "display.h"
 
 static const struct device *gpio=DEVICE_DT_GET(DT_NODELABEL(gpio0));
 enum {CS=10,MOSI=11,SCK=12,MISO=13,BUTTON=14};
@@ -30,10 +31,11 @@ int main(void){
  gpio_pin_configure(gpio,15,GPIO_OUTPUT_HIGH);
  gpio_pin_configure(gpio,CS,GPIO_OUTPUT_HIGH);gpio_pin_configure(gpio,MOSI,GPIO_OUTPUT_LOW);gpio_pin_configure(gpio,SCK,GPIO_OUTPUT_LOW);gpio_pin_configure(gpio,MISO,GPIO_INPUT|GPIO_PULL_DOWN);
  write_reg(3,0xff);write_reg(4,0xff);write_reg(5,0);write_reg(6,0);write_reg(0,0xd3);k_msleep(100);
- wireless_start();struct filter f={0};int64_t next=k_uptime_get();
+ wireless_start();display_start();struct filter f={0};int64_t next=k_uptime_get();
  for(;;){int64_t now=k_uptime_get();double raw=NAN,smooth=NAN,d1=NAN,d2=NAN;bool valid=temperature(&raw),ready=false;
  if(valid){smooth=raw;ready=filter_push(&f,now/1000.0,raw,&smooth,&d1,&d2);}else f.n=0;
  wireless_sample(raw,smooth,d1,d2,valid,ready);
+ display_sample(smooth,d1,d2,valid,ready);
  if(valid)printf("PT100 t_ms=%lld raw=%.3f C smooth=%.3f C d1=%.5f d2=%.6f ready=%d\n",(long long)now,raw,smooth,d1,d2,ready);else printf("PT100 SENSOR_ERROR\n");
  next+=100;if(next<=k_uptime_get())next=k_uptime_get()+100;k_sleep(K_TIMEOUT_ABS_MS(next));}
 }
