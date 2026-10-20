@@ -1,7 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include <math.h>
-#include <stdio.h>
+#include "format.h"
 #include <stdlib.h>
 #include <string.h>
 #include "wireless.h"
@@ -36,6 +36,6 @@ int main(void){
  if(valid){smooth=raw;ready=filter_push(&f,now/1000.0,raw,&smooth,&d1,&d2);}else f.n=0;
  wireless_sample(raw,smooth,d1,d2,valid,ready);
  display_sample(smooth,d1,d2,valid,ready);
- if(valid)printf("PT100 t_ms=%lld raw=%.3f C smooth=%.3f C d1=%.5f d2=%.6f ready=%d\n",(long long)now,raw,smooth,d1,d2,ready);else printf("PT100 SENSOR_ERROR\n");
+ if(valid)probe_printf("PT100 t_ms=%lld raw=%.3f C smooth=%.3f C d1=%.5f d2=%.6f ready=%d\n",(long long)now,raw,smooth,d1,d2,ready);else probe_printf("PT100 SENSOR_ERROR\n");
  next+=100;if(next<=k_uptime_get())next=k_uptime_get()+100;k_sleep(K_TIMEOUT_ABS_MS(next));}
 }

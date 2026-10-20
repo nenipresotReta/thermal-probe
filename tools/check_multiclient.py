@@ -51,7 +51,14 @@ def http_reader():
                 response+=chunk
         header,body=response.split(b'\r\n\r\n',1)
         assert header.startswith(b'HTTP/1.1 200 OK')
-        d=json.loads(body);assert d['valid'] and d['derivatives_ready'];out.append(d['time_s'])
+        try:d=json.loads(body)
+        except (ValueError,UnicodeError) as error:
+            raise AssertionError(f'Invalid HTTP JSON payload: {body!r}') from error
+        assert d['valid'] and d['derivatives_ready'],d
+        for field in ('time_s','raw_c','temperature_c','d1_c_per_s','d2_c_per_s2'):
+            assert isinstance(d[field],(int,float)) and math.isfinite(d[field]),(field,body)
+        if out:assert d['time_s']>=out[-1],('sample clock moved backwards',body)
+        out.append(d['time_s'])
         time.sleep(.1)
     if len(out)>1:assert out[-1]>out[0]
     return {'valid_responses':len(out),'sample_time_advanced_s':round(out[-1]-out[0],3)}

@@ -10,6 +10,8 @@ ALLOWED.update([
     'src/display.c', 'src/display.h', 'src/drawing.h',
     'src/tdisplay_lcd.c', 'src/tdisplay_lcd.h',
     'src/http_request.c', 'src/http_request.h', 'tests/http_request_test.c',
+    'src/format.c', 'src/format.h', 'tests/format_test.c', 'tests/test_format.py',
+    'tests/support/zephyr/kernel.h',
 ])
 root = Path(__file__).resolve().parents[1]
 tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().split('\0')

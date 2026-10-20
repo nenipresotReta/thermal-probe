@@ -39,6 +39,8 @@ The landscape display uses a GitHub Dark-inspired palette and shows temperature,
 
 The LCD uses an 8-bit 8080 bus: D0–D7 = GPIO39/40/41/42/45/46/47/48, reset = 5, CS = 6, DC = 7, WR = 8, RD = 9, backlight = 38. The driver renders four rows at a time to limit RAM use. This build disables PSRAM and has little unused static DRAM; compile and inspect the memory report when increasing buffer or thread sizes.
 
+All application text formatting uses a shared mutex because this SDK's newlib floating-point conversion uses shared reentrancy state. The LCD prepares its labels once per frame. Console lines are formatted into a 256-byte local buffer, then written after releasing the format lock; HTTP sends also run outside that lock. Keep new application formatting behind `probe_printf` / `probe_snprintf`, and keep console messages under 256 bytes. Host tests check concurrent calls, bounded output and that console I/O holds no formatting lock.
+
 ## Build and flash
 
 Requires Python, CMake, Ninja, west, Zephyr **4.1.0** and Zephyr SDK **0.17.0** with the ESP32-S3 Xtensa toolchain. Install Zephyr's host dependencies for your OS. A minimal workspace can be prepared using this repo's manifest:
