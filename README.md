@@ -16,9 +16,23 @@ Edit the copy locally with your **2.4 GHz WPA2** network name and password. Do n
 
 ## Documentation
 
-- [Hardware interfaces](docs/interfaces.md): pin directions, supply constraints and three-wire jumper continuity; no wiring images.
+- [Hardware interfaces](docs/interfaces.md): pin directions, supply constraints and three-wire jumper continuity; pin definitions are documented in tables.
 - [First start and troubleshooting](docs/troubleshooting.md): acceptance checks, diagnosis and redacted issue reports.
 - [Contributing and publication readiness](CONTRIBUTING.md): checks, licensing and privacy boundaries.
+
+## Hardware reference
+
+These owner-supplied photos show the prototype used with this project. The displayed versions were retouched with AI for presentation; fine markings and textures may differ. See the metadata-stripped original photos below. Use the [interface tables](docs/interfaces.md) for pin assignments and verify jumper continuity on your own module.
+
+<table>
+<tr><th>ESP32-S3</th><th>MAX31865 · 3-wire PT100</th></tr>
+<tr>
+<td><img src="docs/images/esp32-retouched.png" alt="AI-retouched ESP32-S3 prototype photo" width="360"></td>
+<td><img src="docs/images/max31865-retouched.png" alt="AI-retouched MAX31865 prototype photo" width="360"></td>
+</tr>
+</table>
+
+[Original ESP32 photo](docs/images/esp32-original.jpg) · [Original MAX31865 photo](docs/images/max31865-original.jpg)
 
 ## Hardware
 
@@ -118,7 +132,7 @@ python3 tools/check_multiclient.py DEVICE_IP --stress
 
 CI runs host-side tests and clean Zephyr 4.1.0 / SDK 0.17.0 builds for display and headless configurations. Build credentials are disposable placeholders. The job deletes generated configuration and binaries and uploads no firmware artifacts. CI does not flash hardware or establish compatibility with untested boards.
 
-The release audit accepts only an explicit list of source/template/documentation files and checks for common credential patterns. It never prints credential values. No binary releases or build-artifact uploads are configured.
+The release audit accepts only an explicit list of source/template/documentation files and four explicitly approved reference photos and checks for common credential patterns. It never prints credential values. No binary releases or build-artifact uploads are configured.
 
 ## License
 

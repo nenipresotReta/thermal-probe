@@ -1,6 +1,7 @@
 """Audit the Git index; refuse unexpected files before source publication."""
 from pathlib import Path
 import json
+import hashlib
 import re
 import subprocess
 import sys
@@ -17,10 +18,17 @@ ALLOWED.update([
     'src/format.c', 'src/format.h', 'tests/format_test.c', 'tests/test_format.py',
     'tests/support/zephyr/kernel.h',
 ])
+# Owner-approved photos only; exact digests prevent arbitrary binary uploads.
+APPROVED_IMAGES = {'docs/images/esp32-original.jpg': 'eb04db0dd55d7b4159017b2f5266c3ed77b441e9687f716b68a237eb1cd31910', 'docs/images/esp32-retouched.png': '1347b9c6f95d1dbd29a55ee639fa16fda3cccb7bdda0cdcd195b154df1520f2b', 'docs/images/max31865-original.jpg': 'd00ff2a9a977dac56362c3b11899109735bae1a3ef339f78b7cba83494c69da8', 'docs/images/max31865-retouched.png': '45f77006adfd252199f291603a143e3db8ad3e52dd11f34c7660b9426ad2d055'}
 root = Path(__file__).resolve().parents[1]
 tracked = subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().split('\0')
 failed = []
 for name in filter(None, tracked):
+    if name in APPROVED_IMAGES:
+        image_data = subprocess.check_output(['git', 'show', ':' + name], cwd=root)
+        if hashlib.sha256(image_data).hexdigest() != APPROVED_IMAGES[name]:
+            failed.append(name)
+        continue
     if name not in ALLOWED:
         failed.append(name)
         continue
@@ -38,4 +46,4 @@ for name in filter(None, tracked):
         failed.append(name)
 if failed:
     sys.exit('Publication refused; inspect files locally: ' + ', '.join(sorted(set(failed))))
-print('PASS: %d approved text source files; empty config template; no private config or firmware images.' % len(list(filter(None, tracked))))
+print('PASS: %d approved source/documentation files (including hash-checked photos); empty config template; no private config or firmware images.' % len(list(filter(None, tracked))))

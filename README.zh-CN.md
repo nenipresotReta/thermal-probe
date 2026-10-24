@@ -20,6 +20,20 @@ cp config/device.example.json config/device.json
 - [首次启动和故障排查](docs/troubleshooting.zh-CN.md)：验收方法、诊断顺序和脱敏反馈。
 - [参与开发与公开前检查](CONTRIBUTING.zh-CN.md)。
 
+## 实物参考
+
+以下照片来自本项目原型实物。展示版本经过 AI 修饰以改善观感，细小字样和纹理可能有变化；下方附去除元数据的原照。引脚定义以[接口表](docs/interfaces.zh-CN.md)为准，跳线导通需在自己的模块上实测。
+
+<table>
+<tr><th>ESP32-S3</th><th>MAX31865 · 3-wire PT100</th></tr>
+<tr>
+<td><img src="docs/images/esp32-retouched.png" alt="AI-retouched ESP32-S3 prototype photo" width="360"></td>
+<td><img src="docs/images/max31865-retouched.png" alt="AI-retouched MAX31865 prototype photo" width="360"></td>
+</tr>
+</table>
+
+[ESP32 原照](docs/images/esp32-original.jpg) · [MAX31865 原照](docs/images/max31865-original.jpg)
+
 ## 硬件
 
 已测试目标为 T-Display-S3 兼容 ESP32-S3 板，16 MB Flash，170 × 320 ST7789 屏幕（HD19006C30 替换屏）。使用自定义板定义，不能仅凭产品名认定所有变体都兼容。GPIO15 会在启动时输出高电平，作为此板的电源使能；不包含内置键盘代码。
@@ -126,7 +140,7 @@ python3 tools/check_multiclient.py DEVICE_IP --stress
 
 CI 执行主机测试，以及干净环境的有屏／无屏 Zephyr 构建。CI 使用一次性占位凭据，删除生成配置和二进制，不上传固件附件。CI 不烧写实物，不能证明未测试板子的兼容性。
 
-发布检查只允许明确列出的源码、模板和文档，扫描常见凭据模式且不打印凭据值。它检查暂存区，不覆盖所有历史、日志或附件。不同硬件和干净依赖安装都需要对应验证。
+发布检查只允许明确列出的源码、模板、文档和四张已批准的参考照片，扫描常见凭据模式且不打印凭据值。它检查暂存区，不覆盖所有历史、日志或附件。不同硬件和干净依赖安装都需要对应验证。
 
 ## 许可证
 
