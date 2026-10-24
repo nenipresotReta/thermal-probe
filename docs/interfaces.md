@@ -1,12 +1,14 @@
 # Hardware interfaces
 
+[English](interfaces.md) | [简体中文](interfaces.zh-CN.md)
+
 This is the interface contract for the current firmware, not a generic ESP32 wiring guide. GPIO numbers are chip GPIO numbers, not connector positions. Check your board schematic before powering it. No wiring photograph is required.
 
 ## Supported target
 
 The tested target is an ESP32-S3 display board with 16 MB flash and a 170 × 320 ST7789 panel using an 8-bit 8080 bus. The custom board target is `tdisplay_s3/esp32s3/procpu`. A matching product name alone does not establish electrical compatibility. PSRAM is disabled.
 
-The current application sets GPIO15 high at startup for the tested board's power enable. Do not reuse this firmware on an arbitrary ESP32-S3 board without reviewing this pin and the display bus. There is currently no selectable generic/headless board profile.
+The current application sets GPIO15 high at startup for the tested board's power enable. Do not reuse this firmware on an arbitrary ESP32-S3 board without reviewing this pin and the display bus. `headless.conf` disables the LCD and GPIO14 UI on this same board. There is no generic board profile.
 
 ## MAX31865 digital interface
 
@@ -68,6 +70,7 @@ The user button controls the local display; it is not a substitute for the board
 | Wi-Fi SSID/password | Local `config/device.json` |
 | Sensor pins, reference resistance, nominal PT100 curve, rejection mode, 100 ms loop | `src/main.c` |
 | Filter window | `src/filter.h`, `src/filter.c` |
+| LCD enable | `CONFIG_THERMAL_DISPLAY` in Kconfig; `headless.conf` disables it |
 | LCD pins/driver | `src/tdisplay_lcd.c` |
 | Display/button behavior | `src/display.c` |
 | Flash layout and USB console | `boards/lilygo/tdisplay_s3/` |

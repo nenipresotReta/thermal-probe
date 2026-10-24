@@ -1,5 +1,7 @@
 # Thermal Probe
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 ESP32-S3 + MAX31865 three-wire PT100 thermometer with a local display. Local Wi-Fi, 10 Hz acquisition, smoothed temperature and first/second derivatives. Works with [Thermal Scope](https://github.com/nenipresotReta/thermal-scope) or Artisan over Modbus TCP.
 
 **You MUST fill `config/device.json` before compiling or flashing.** Copy the empty template first:
@@ -61,7 +63,7 @@ west update
 west zephyr-export
 pip install -r zephyr/scripts/requirements.txt
 west blobs fetch hal_espressif
-# Install SDK 0.17.0 separately and export ZEPHYR_SDK_INSTALL_DIR if needed.
+west sdk install --version 0.17.0 --toolchains xtensa-espressif_esp32s3_zephyr-elf --no-hosttools
 cd thermal-probe
 cp config/device.example.json config/device.json
 # Fill config/device.json locally, then:
@@ -69,7 +71,7 @@ sh build.sh
 sh flash.sh
 ```
 
-Use `sh build.sh -p always` for a pristine rebuild after SDK/board changes. Build output is `build/zephyr/zephyr.bin`. The board uses ESP simple boot with a complete image at offset 0; prefer the configured west flash runner. If automatic download mode fails, hold BOOT, tap RESET, release BOOT, then flash. Board button labels may differ.
+Use `sh build.sh -p always` for a pristine rebuild after SDK/board changes. For the same board without its display, run `sh build.sh -p always -- -DEXTRA_CONF_FILE=headless.conf`; the generated build configuration is retained by `sh flash.sh`. To return to the display build, run `sh build.sh -p always -- -DEXTRA_CONF_FILE=""` before flashing. Headless mode omits the LCD driver, UI thread and local history, but still enables board power on GPIO15. It is not a generic ESP32 board profile. Build output is `build/zephyr/zephyr.bin`. The board uses ESP simple boot with a complete image at offset 0; prefer the configured west flash runner. If automatic download mode fails, hold BOOT, tap RESET, release BOOT, then flash. Board button labels may differ.
 
 The source was derived from a working Zephyr 4.1-based local firmware. Host algorithm/configuration/protocol tests can run without the SDK. A clean upstream dependency installation and every hardware variant require their own verification. This repository contains source only.
 
@@ -114,6 +116,10 @@ python3 tools/check_wireless.py DEVICE_IP
 python3 tools/check_multiclient.py DEVICE_IP --stress
 ```
 
-CI currently runs host-side source/configuration/algorithm/protocol tests; it does **not** build Zephyr or flash hardware. A green CI result is not a clean firmware-build or hardware-compatibility certificate.
+CI runs host-side tests and clean Zephyr 4.1.0 / SDK 0.17.0 builds for display and headless configurations. Build credentials are disposable placeholders. The job deletes generated configuration and binaries and uploads no firmware artifacts. CI does not flash hardware or establish compatibility with untested boards.
 
 The release audit accepts only an explicit list of source/template/documentation files and checks for common credential patterns. It never prints credential values. No binary releases or build-artifact uploads are configured.
+
+## License
+
+[MIT](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for dependencies and references.

@@ -1,5 +1,7 @@
 # First start and troubleshooting
 
+[English](troubleshooting.md) | [简体中文](troubleshooting.zh-CN.md)
+
 Follow the README build instructions and [interface tables](interfaces.md) first. This repository contains no preconfigured binary. Network credentials are embedded during compilation, so changing Wi-Fi requires rebuilding and flashing.
 
 ## First-start acceptance

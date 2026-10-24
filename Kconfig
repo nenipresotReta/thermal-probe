@@ -1,0 +1,14 @@
+mainmenu "Thermal Probe"
+
+source "Kconfig.zephyr"
+
+menu "Thermal Probe options"
+
+config THERMAL_DISPLAY
+    bool "Enable the tested ST7789 panel and GPIO14 controls"
+    default y
+    help
+      Disable for a headless build on the same supported ESP32-S3 board.
+      Sensor, power enable and network behavior remain unchanged.
+
+endmenu

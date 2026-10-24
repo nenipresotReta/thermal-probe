@@ -1,10 +1,10 @@
-name: Source checks
-on: [push, pull_request]
+name: Source and firmware checks
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,3 +15,42 @@ jobs:
       - run: cc -Wall -Wextra -Werror -Isrc src/filter.c tests/filter_test.c -lm -o /tmp/filter-test && /tmp/filter-test
       - run: cc -Wall -Wextra -Werror -Isrc src/modbus_codec.c tests/modbus_test.c -o /tmp/modbus-test && /tmp/modbus-test
       - run: cc -Wall -Wextra -Werror -Isrc src/http_request.c tests/http_request_test.c -o /tmp/http-request-test && /tmp/http-request-test
+  firmware:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: thermal-probe
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gperf device-tree-compiler wget xz-utils file gcc g++
+          python -m pip install west
+      - name: Initialize clean pinned Zephyr workspace
+        run: |
+          west init -l thermal-probe
+          west update
+          west zephyr-export
+          python -m pip install -r zephyr/scripts/requirements.txt
+          west blobs fetch hal_espressif
+          west sdk install --version 0.17.0 --toolchains xtensa-espressif_esp32s3_zephyr-elf --no-hosttools
+      - name: Generate disposable test-only configuration
+        run: |
+          python - <<'PYCONFIG'
+          import json
+          from pathlib import Path
+          Path('thermal-probe/config/device.json').write_text(json.dumps({'ssid':'ci-placeholder','password':'ci-placeholder-password'}))
+          PYCONFIG
+      - name: Build display firmware
+        working-directory: thermal-probe
+        run: sh build.sh -p always
+      - name: Build headless firmware
+        working-directory: thermal-probe
+        run: sh build.sh -p always -- -DEXTRA_CONF_FILE=headless.conf
+      - name: Remove configuration and binary outputs
+        if: always()
+        run: rm -rf thermal-probe/build thermal-probe/local thermal-probe/config/device.json
