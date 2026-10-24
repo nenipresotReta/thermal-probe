@@ -50,8 +50,8 @@ static void draw(int64_t now){
  char timer_text[32],temperature_text[64],d1_text[64],d2_text[64],axis_text[3][32];
  probe_snprintf(timer_text,sizeof timer_text,"%s %02u:%02u",running?"LIVE":"HOLD",elapsed/60,elapsed%60);
  if(valid)probe_snprintf(temperature_text,sizeof temperature_text,"%.1f C",temperature);else probe_snprintf(temperature_text,sizeof temperature_text,"SENSOR ERROR");
- if(valid&&ready)probe_snprintf(d1_text,sizeof d1_text,"D1: %.3f C/S",d1);else probe_snprintf(d1_text,sizeof d1_text,"D1: -- C/S");
- if(valid&&ready)probe_snprintf(d2_text,sizeof d2_text,"D2: %.4f C/S2",d2);else probe_snprintf(d2_text,sizeof d2_text,"D2: -- C/S2");
+ if(valid&&ready)probe_snprintf(d1_text,sizeof d1_text,"D1: %.2f C/MIN",d1*60.0);else probe_snprintf(d1_text,sizeof d1_text,"D1: -- C/MIN");
+ if(valid&&ready)probe_snprintf(d2_text,sizeof d2_text,"D2: %.2f C/MIN2",d2*3600.0);else probe_snprintf(d2_text,sizeof d2_text,"D2: -- C/MIN2");
  for(int j=0;j<3;j++)probe_snprintf(axis_text[j],sizeof axis_text[j],"%.0f",high-(high-low)*j/2);
  for(int y=0;y<170;y+=BAND_HEIGHT){
  unsigned height=170-y<BAND_HEIGHT?170-y:BAND_HEIGHT;

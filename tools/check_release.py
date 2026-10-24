@@ -7,6 +7,7 @@ import sys
 
 ALLOWED = set(['.github/workflows/ci.yml', '.gitignore', 'CMakeLists.txt', 'README.md', 'boards/lilygo/tdisplay_s3/Kconfig.tdisplay_s3', 'boards/lilygo/tdisplay_s3/board.cmake', 'boards/lilygo/tdisplay_s3/board.yml', 'boards/lilygo/tdisplay_s3/tdisplay_s3_procpu.dts', 'boards/lilygo/tdisplay_s3/tdisplay_s3_procpu_defconfig', 'build.sh', 'config/device.example.json', 'flash.sh', 'prj.conf', 'src/filter.c', 'src/filter.h', 'src/main.c', 'src/modbus_codec.c', 'src/modbus_codec.h', 'src/wireless.c', 'src/wireless.h', 'tests/filter_test.c', 'tests/modbus_test.c', 'tests/test_config.py', 'tools/check_multiclient.py', 'tools/check_wireless.py', 'tools/configure.py', 'west.yml', 'tools/check_release.py'])
 ALLOWED.update([
+    "CONTRIBUTING.md", "docs/interfaces.md", "docs/troubleshooting.md",
     'src/display.c', 'src/display.h', 'src/drawing.h',
     'src/tdisplay_lcd.c', 'src/tdisplay_lcd.h',
     'src/http_request.c', 'src/http_request.h', 'tests/http_request_test.c',

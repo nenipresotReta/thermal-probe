@@ -12,13 +12,19 @@ Edit the copy locally with your **2.4 GHz WPA2** network name and password. Do n
 
 **Compiled firmware contains the Wi-Fi credentials. Never upload firmware images, generated headers, build directories, backups or your private config.** This repository distributes source only; it deliberately has no downloadable firmware image. `.gitignore` is a safeguard, not a way to remove secrets from existing Git history. Do not force-add ignored files.
 
+## Documentation
+
+- [Hardware interfaces](docs/interfaces.md): pin directions, supply constraints and three-wire jumper continuity; no wiring images.
+- [First start and troubleshooting](docs/troubleshooting.md): acceptance checks, diagnosis and redacted issue reports.
+- [Contributing and publication readiness](CONTRIBUTING.md): checks, licensing and privacy boundaries.
+
 ## Hardware
 
 Tested hardware: T-Display-S3-compatible ESP32-S3 board with 16 MB flash and a 170 × 320 ST7789 display (HD19006C30 replacement). This is a custom board definition, not a guarantee that every T-Display variant has the same wiring. GPIO15 is driven high for this board's power enable. No built-in keyboard code is included.
 
 | ESP32-S3 | MAX31865 module |
 |---|---|
-| 3V3 | VIN, **only on the pictured module supporting 3 V input** |
+| 3V3 | Documented power input; **VIN only if rated to operate from 3.3 V** |
 | GND | GND |
 | GPIO12 | CLK |
 | GPIO11 | SDI / MOSI |
@@ -30,7 +36,7 @@ PT100 reference resistance is **430 ohms**. For the module with F+/RTD+/RTD−/F
 
 ### Local display
 
-The landscape display uses a GitHub Dark-inspired palette and shows temperature, D1 in °C/s, D2 in °C/s², connection address, and a local temperature curve. Sampling and the network continue independently of the screen.
+The landscape display uses a GitHub Dark-inspired palette and shows temperature, D1 in °C/min, D2 in °C/min², connection address, and a local temperature curve. The LCD labels use `C/MIN` and `C/MIN2` (minute squared). Only the display converts units: D1 × 60 and D2 × 3600; HTTP, Modbus and acquisition retain seconds. Sampling and the network continue independently of the screen.
 
 - Tap GPIO14 to hold/resume the local curve. Numerical readings remain live.
 - Hold GPIO14 for at least 2 s, then release to clear the local curve and its elapsed time.
@@ -107,5 +113,7 @@ python3 tools/check_release.py
 python3 tools/check_wireless.py DEVICE_IP
 python3 tools/check_multiclient.py DEVICE_IP --stress
 ```
+
+CI currently runs host-side source/configuration/algorithm/protocol tests; it does **not** build Zephyr or flash hardware. A green CI result is not a clean firmware-build or hardware-compatibility certificate.
 
 The release audit accepts only an explicit list of source/template/documentation files and checks for common credential patterns. It never prints credential values. No binary releases or build-artifact uploads are configured.
